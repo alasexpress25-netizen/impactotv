@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- ═══════════════════════════════════════════════
+       SEO — formulário interno: não indexar
+  ═══════════════════════════════════════════════ -->
+  <title>Quero Anunciar | Impacto TV Mídia</title>
+  <meta name="description" content="Preencha o formulário para anunciar sua marca na rede de telas Impacto TV Mídia no litoral de Santa Catarina.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="https://impactotv.alastecno.com/formulario-clientes.html">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ─── RESET & BASE ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --white:   #FFFFFF;
+      --gold:    #C9A244;
+      --gold2:   #e8c96a;
+      --black:   #020202;
+      --dark:    #0a0a0a;
+      --dark2:   #111111;
+      --dark3:   #1a1a1a;
+      --muted:   rgba(255,255,255,.4);
+      --muted2:  rgba(255,255,255,.6);
+      --border:  rgba(201,162,68,.18);
+      --border2: rgba(201,162,68,.35);
+      --err:     #e05252;
+      --ok:      #4caf7d;
+      --font-title: 'Cinzel', serif;
+      --font-body:  'Montserrat', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; overflow-x: hidden; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--black);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      overflow-x: hidden;
+    }
+
+    /* ─── GRID BACKGROUND ──────────────────────────────────── */
+    .page-bg {
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 50% 30%, rgba(201,162,68,.06) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(201,162,68,.03) 0%, transparent 60%);
+    }
+    .page-grid {
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(201,162,68,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,162,68,.035) 1px, transparent 1px);
+      background-size: 80px 80px;
+      animation: gridMove 20s linear infinite;
+    }
+    @keyframes gridMove { from { transform: translateY(0); } to { transform: translateY(80px); } }
+
+    /* ─── CARD ─────────────────────────────────────────────── */
+    .card {
+      position: relative; z-index: 10;
+      background: var(--dark2);
+      border: 1px solid var(--border);
+      width: 100%; max-width: 520px;
+      overflow: hidden;
+      animation: cardUp .6s cubic-bezier(.22,1,.36,1) both;
+      box-shadow:
+        0 0 0 1px rgba(201,162,68,.06),
+        0 24px 80px rgba(0,0,0,.6),
+        inset 0 1px 0 rgba(201,162,68,.1);
+    }
+    @keyframes cardUp { from { opacity: 0; transform: translateY(28px) scale(.98); } to { opacity: 1; transform: none; } }
+
+    /* ─── CARD HEADER ───────────────────────────────────────── */
+    .card-header {
+      padding: 2.6rem 2.8rem 2.2rem;
+      position: relative; overflow: hidden;
+      background: var(--dark3);
+      border-bottom: 1px solid var(--border);
+    }
+    .card-header::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 240px; height: 240px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,162,68,.08) 0%, transparent 70%);
+    }
+    .header-eyebrow {
+      font-family: var(--font-body);
+      font-size: .65rem; font-weight: 600;
+      letter-spacing: .3em; text-transform: uppercase;
+      color: var(--gold);
+      border: 1px solid var(--border2);
+      display: inline-block;
+      padding: .32rem 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .card-header h1 {
+      font-family: var(--font-title);
+      color: var(--white);
+      font-size: 1.75rem; font-weight: 700;
+      letter-spacing: .02em; line-height: 1.2;
+    }
+    .card-header h1 .accent { color: var(--gold); }
+    .card-header p {
+      color: var(--muted2);
+      font-size: .83rem; margin-top: .6rem;
+      font-weight: 300; line-height: 1.65;
+    }
+
+    /* ─── CARD BODY ─────────────────────────────────────────── */
+    .card-body { padding: 2rem 2.8rem 2.4rem; }
+    #form-area.hide { display: none; }
+
+    /* ─── FIELDS ────────────────────────────────────────────── */
+    .field { margin-bottom: 1.3rem; }
+    label {
+      display: block;
+      font-size: .68rem; font-weight: 600;
+      color: var(--gold);
+      text-transform: uppercase; letter-spacing: .12em;
+      margin-bottom: .5rem;
+      font-family: var(--font-body);
+    }
+    label .req { color: var(--err); margin-left: 2px; }
+
+    input[type=text], input[type=email], input[type=tel], select, textarea {
+      width: 100%; padding: .82rem 1rem;
+      background: var(--dark);
+      border: 1px solid var(--border);
+      color: var(--white);
+      font-family: var(--font-body);
+      font-size: .92rem; font-weight: 400;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      -webkit-appearance: none; appearance: none;
+      border-radius: 0;
+    }
+    textarea { resize: vertical; min-height: 76px; }
+    input::placeholder, textarea::placeholder { color: rgba(255,255,255,.22); }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,162,68,.1);
+      background: #0d0d0d;
+    }
+    input.has-err { border-color: var(--err); box-shadow: 0 0 0 3px rgba(224,82,82,.08); }
+
+    select { cursor: pointer; }
+    select option { background: var(--dark3); color: var(--white); }
+
+    .field-err { font-size: .72rem; color: var(--err); margin-top: .38rem; display: none; }
+    .field-err.show { display: block; }
+
+    .phone-wrap { display: flex; gap: .5rem; }
+    select.prefix { width: 110px; flex-shrink: 0; font-size: .83rem; }
+
+    /* ─── CONSENT ─────────────────────────────────────────────── */
+    .consent-block {
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--border);
+      padding: 1rem 1.1rem;
+      margin-bottom: 1.3rem;
+      transition: border-color .2s;
+    }
+    .consent-block.has-err { border-color: var(--err); background: rgba(224,82,82,.04); }
+    .consent-row { display: flex; align-items: flex-start; gap: .7rem; cursor: pointer; }
+    .consent-row input[type=checkbox] {
+      width: 16px; height: 16px; flex-shrink: 0;
+      margin-top: 3px; accent-color: var(--gold); cursor: pointer;
+    }
+    .consent-text { font-size: .76rem; color: rgba(255,255,255,.65); line-height: 1.6; }
+    .consent-err { font-size: .72rem; color: var(--err); margin-top: .5rem; display: none; padding-left: 1.9rem; }
+    .consent-err.show { display: block; }
+
+    /* ─── BUTTONS ────────────────────────────────────────────── */
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: .45rem;
+      background: var(--gold);
+      color: var(--black);
+      width: 100%; padding: 1rem;
+      font-family: var(--font-body);
+      font-size: .85rem; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
+      cursor: pointer; border: none;
+      transition: all .2s ease;
+      position: relative; overflow: hidden;
+    }
+    .btn-primary::after {
+      content: ''; position: absolute; inset: 0;
+      background: rgba(255,255,255,.08); opacity: 0; transition: opacity .2s;
+    }
+    .btn-primary:hover:not(:disabled)::after { opacity: 1; }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(201,162,68,.3); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(0,0,0,.25);
+      border-top-color: var(--black);
+      border-radius: 50%;
+      animation: spin .65s linear infinite; display: none;
+    }
+    .spinner.show { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── SUCCESS SCREEN ─────────────────────────────────────── */
+    #success-screen { display: none; text-align: center; padding: 3.5rem 2.5rem; }
+    #success-screen.show { display: block; animation: cardUp .5s ease; }
+    .check-circle {
+      width: 72px; height: 72px;
+      border: 2px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.5rem;
+      font-size: 1.8rem; color: var(--gold);
+      position: relative;
+    }
+    .check-circle::before { content: ''; position: absolute; inset: 6px; background: rgba(201,162,68,.08); }
+    #success-screen h2 { font-family: var(--font-title); font-size: 1.5rem; color: var(--white); margin-bottom: .7rem; }
+    #success-screen h2 span { color: var(--gold); }
+    #success-screen p { color: var(--muted2); font-size: .88rem; line-height: 1.75; }
+    .btn-planes {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: .5rem; width: 100%;
+      background: var(--gold); color: var(--black);
+      padding: 1rem; margin-top: 1.8rem;
+      font-family: var(--font-body); font-size: .85rem; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: all .2s ease;
+    }
+    .btn-planes:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(201,162,68,.3); }
+
+    .btn-close-manual {
+      display: block; margin: .9rem auto 0; background: transparent; border: none;
+      color: var(--muted); padding: .5rem 1rem; font-family: var(--font-body);
+      font-size: .74rem; letter-spacing: .06em; text-transform: uppercase;
+      cursor: pointer; transition: color .2s; text-decoration: underline;
+    }
+    .btn-close-manual:hover { color: var(--gold2); }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────── */
+    @media(max-width:560px) {
+      body { padding: 0; align-items: flex-start; }
+      .card { border-left: none; border-right: none; min-height: 100vh; box-shadow: none; }
+      .card-header { padding: 2rem 1.5rem 1.6rem; }
+      .card-header h1 { font-size: 1.45rem; }
+      .card-body { padding: 1.6rem 1.5rem 2rem; }
+      .phone-wrap { gap: .4rem; }
+      select.prefix { width: 100px; }
+      input[type=text], input[type=email], input[type=tel], select, textarea { font-size: 1rem; padding: .88rem 1rem; }
+      .btn-primary { padding: 1rem; font-size: .9rem; }
+      #success-screen { padding: 3rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-bg"></div>
+<div class="page-grid"></div>
+
+<div class="card">
+
+  <div class="card-header">
+    <div class="header-eyebrow">Impacto TV Mídia · Publicidade em Telas</div>
+    <h1>Quero Anunciar na<br><span class="accent">Impacto TV</span></h1>
+    <p>Preencha seus dados e nossa equipe entra em contato para apresentar os planos disponíveis para sua marca.</p>
+  </div>
+
+  <div class="card-body" id="form-area">
+
+    <div class="field">
+      <label>Nome completo <span class="req">*</span></label>
+      <input type="text" id="nombre" placeholder="Seu nome" autocomplete="name"/>
+      <div class="field-err" id="err-nombre">Insira seu nome.</div>
+    </div>
+
+    <div class="field">
+      <label>Empresa</label>
+      <input type="text" id="empresa" placeholder="Nome da sua empresa" autocomplete="organization"/>
+    </div>
+
+    <div class="field">
+      <label>E-mail <span class="req">*</span></label>
+      <input type="email" id="email" placeholder="voce@email.com" autocomplete="email"/>
+      <div class="field-err" id="err-email">Insira um e-mail válido.</div>
+    </div>
+
+    <div class="field">
+      <label>Telefone / WhatsApp <span class="req">*</span></label>
+      <div class="phone-wrap">
+        <select class="prefix" id="phone-prefix">
+          <option value="+55">🇧🇷 +55</option>
+          <option value="+54">🇦🇷 +54</option>
+          <option value="+1">🇺🇸 +1</option>
+          <option value="+598">🇺🇾 +598</option>
+          <option value="+595">🇵🇾 +595</option>
+        </select>
+        <input type="tel" id="telefono" placeholder="48 9999 9999"
+               oninput="this.value=this.value.replace(/[^\d\s\-]/g,'')"/>
+      </div>
+      <div class="field-err" id="err-telefono">Verifique o número (com DDD, sem espaços extras).</div>
+    </div>
+
+    <div class="field">
+      <label>Sua mensagem (opcional)</label>
+      <textarea id="mensagem" placeholder="Conte um pouco sobre o que você quer anunciar"></textarea>
+    </div>
+
+    <div class="consent-block" id="block-datos">
+      <label class="consent-row">
+        <input type="checkbox" id="consent-datos" onchange="clearConsentErr()"/>
+        <span class="consent-text">
+          Aceito que a <strong style="color:var(--gold2)">Impacto TV Mídia</strong> colete e processe meus dados
+          para entrar em contato comigo sobre os planos de publicidade. Você pode solicitar a exclusão dos seus
+          dados a qualquer momento.
+        </span>
+      </label>
+      <div class="field-err" id="err-datos">⚠ Precisamos do seu consentimento para continuar.</div>
+    </div>
+
+    <button class="btn-primary" id="btn-submit" onclick="submitForm()" data-track="form-submit-impactotv">
+      <span class="spinner" id="spinner"></span>
+      <span id="btn-text">Quero Anunciar</span>
+    </button>
+
+  </div><!-- /card-body -->
+
+  <!-- SUCESSO -->
+  <div id="success-screen">
+    <div class="check-circle">✓</div>
+    <h2>Recebemos seu<br><span>contato!</span></h2>
+    <p>Em breve nossa equipe vai falar com você para apresentar os planos disponíveis na sua região.</p>
+    <a class="btn-planes" id="btn-whatsapp-confirm" href="#" target="_blank" rel="noopener"
+       style="background:#25D366;border-color:#25D366;display:flex;align-items:center;justify-content:center;gap:.5rem">
+      💬 Confirmar pelo WhatsApp
+    </a>
+    <p style="margin-top:.6rem;font-size:.82rem;opacity:.8">Assim sua conversa com a equipe já começa direto no WhatsApp.</p>
+    <p style="margin-top:.6rem">Quer já dar uma olhada nos planos e valores enquanto isso?</p>
+    <a class="btn-planes" href="https://publicidade.alastecno.com" target="_top">Ver Planos e Preços →</a>
+    <button class="btn-close-manual" onclick="tryCloseModal()">Fechar e continuar navegando</button>
+  </div>
+
+</div><!-- /card -->
+
+<script>
+/* ══════════════════════════════════════════════════
+   ⚙️  CONFIGURAÇÃO — proyecto ImpactoTV (separado de LaVisualMk)
+══════════════════════════════════════════════════ */
+const SUPABASE_URL  = 'https://sdfwredxmyawvolxuifp.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_D4UuH4ue_5dG1rQ3Qr_DBg_kKoEhMK0';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const $   = id => document.getElementById(id);
+const val = id => $(id).value.trim();
+
+function getUTMs() {
+  const p = new URLSearchParams(window.location.search);
+  return {
+    utm_source:   p.get('utm_source')   || null,
+    utm_medium:   p.get('utm_medium')   || null,
+    utm_campaign: p.get('utm_campaign') || null,
+    utm_content:  p.get('utm_content')  || null,
+    utm_term:     p.get('utm_term')     || null,
+  };
+}
+
+function clearConsentErr() {
+  $('block-datos').classList.remove('has-err');
+  $('err-datos').classList.remove('show');
+}
+
+/* ── Validación de teléfono por país ──
+   Antes solo chequeaba 6-12 dígitos para cualquier prefijo, lo que dejaba
+   pasar cualquier cosa. Ahora valida el rango real de dígitos según el
+   país elegido, y rechaza patrones obviamente de relleno. */
+const PHONE_RULES = {
+  '+55':  { min: 10, max: 11 }, // Brasil: DDD(2) + 8 ou 9 dígitos
+  '+54':  { min: 10, max: 11 }, // Argentina: código de área + número
+  '+1':   { min: 10, max: 10 }, // EE.UU./Canadá
+  '+598': { min: 8,  max: 8  }, // Uruguay
+  '+595': { min: 9,  max: 9  }, // Paraguay
+};
+
+function isFakePattern(digits) {
+  if (/^(\d)\1+$/.test(digits)) return true;              // todos el mismo dígito
+  if (/^0123456789?$|^123456789?0?$/.test(digits)) return true; // secuencial obvio
+  return false;
+}
+
+function validarTelefono(prefix, digits) {
+  const rule = PHONE_RULES[prefix] || { min: 6, max: 12 };
+  if (digits.length < rule.min || digits.length > rule.max) return false;
+  if (isFakePattern(digits)) return false;
+  return true;
+}
+
+function setErr(inputId, errId, msg) {
+  $(inputId).classList.add('has-err');
+  const el = $(errId);
+  el.textContent = msg || el.textContent;
+  el.classList.add('show');
+}
+function clearErr(inputId, errId) {
+  $(inputId).classList.remove('has-err');
+  $(errId).classList.remove('show');
+}
+
+async function submitForm() {
+  const nombre   = val('nombre');
+  const empresa  = val('empresa');
+  const email    = val('email');
+  const digits   = $('telefono').value.replace(/\D/g,'');
+  const prefix   = val('phone-prefix');
+  const mensagem = val('mensagem');
+  const consent  = $('consent-datos').checked;
+
+  let valid = true;
+
+  if (!nombre) { setErr('nombre','err-nombre'); valid = false; } else clearErr('nombre','err-nombre');
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { setErr('email','err-email'); valid = false; }
+  else clearErr('email','err-email');
+
+  if (!validarTelefono(prefix, digits)) { setErr('telefono','err-telefono'); valid = false; }
+  else clearErr('telefono','err-telefono');
+
+  if (!consent) {
+    $('block-datos').classList.add('has-err');
+    $('err-datos').classList.add('show');
+    valid = false;
+  }
+
+  if (!valid) return;
+
+  const btn = $('btn-submit');
+  btn.disabled = true;
+  $('spinner').classList.add('show');
+  $('btn-text').textContent = 'Enviando…';
+
+  const { error } = await sb.from('leads_impacto3d').insert([{
+    nombre,
+    empresa: empresa || null,
+    email,
+    telefono: prefix + digits,
+    mensagem: mensagem || null,
+    consent_datos: consent,
+    referrer: document.referrer || null,
+    fuente: 'site_impactotv_modal',
+    ...getUTMs(),
+  }]);
+
+  $('spinner').classList.remove('show');
+
+  if (error) {
+    btn.disabled = false;
+    $('btn-text').textContent = 'Quero Anunciar';
+    alert('Erro ao enviar. Tente novamente em alguns instantes.');
+    console.error('[leads_impacto3d] insert error:', error.message);
+    return;
+  }
+
+  // Link de WhatsApp con mensaje precargado, para que el lead confirme
+  // su número real y arranque la conversación directo con nosotros.
+  const IMPACTOTV_WHATSAPP_NUMBER = '5548XXXXXXXX'; // TODO: poner el número real (con código de país, sin + ni espacios)
+  const waMsg = encodeURIComponent(
+    `Olá! Acabei de me cadastrar no site da Impacto TV. Meu nome é ${nombre}, gostaria de saber mais sobre os planos.`
+  );
+  $('btn-whatsapp-confirm').href = `https://wa.me/${IMPACTOTV_WHATSAPP_NUMBER}?text=${waMsg}`;
+
+  $('form-area').classList.add('hide');
+  $('success-screen').classList.add('show');
+}
+
+function tryCloseModal() {
+  try {
+    if (window.parent && window.parent !== window && typeof window.parent.closeFormModal === 'function') {
+      window.parent.closeFormModal();
+      return;
+    }
+  } catch (e) {}
+  // Si no está dentro del modal (abierto directo), no hace nada más: el botón "Fechar" ya está visible.
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- ═══════════════════════════════════════════════
+       SEO — valores estáticos (fallback)
+       JS atualiza TODOS os tags ao carregar o artigo
+  ═══════════════════════════════════════════════ -->
+  <title id="page-title">Artigo – Impacto TV Mídia</title>
+  <meta name="description" id="page-desc" content="Artigo do blog da Impacto TV Mídia – publicidade DOOH 3D em Santa Catarina."/>
+  <meta name="author" content="Impacto TV Mídia">
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" id="page-canonical" href="https://impactotv.alastecno.com/blog-articulo.html">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article"/>
+  <meta property="og:site_name" content="Impacto TV Mídia">
+  <meta property="og:title" id="og-title" content="Artigo – Impacto TV Mídia"/>
+  <meta property="og:description" id="og-desc" content=""/>
+  <meta property="og:url" id="og-url" content="https://impactotv.alastecno.com/blog-articulo.html">
+  <meta property="og:image" id="og-image" content="https://impactotv.alastecno.com/og-image.jpg">
+  <meta property="og:locale" content="pt_BR">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" id="tw-title" content="Artigo – Impacto TV Mídia">
+  <meta name="twitter:description" id="tw-desc" content="">
+  <meta name="twitter:image" id="tw-image" content="https://impactotv.alastecno.com/og-image.jpg">
+
+  <!-- JSON-LD Article (esqueleto; JS sobrescreve ao carregar) -->
+  <script type="application/ld+json" id="ld-article">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Artigo – Impacto TV Mídia",
+    "description": "Artigo do blog da Impacto TV Mídia.",
+    "url": "https://impactotv.alastecno.com/blog-articulo.html",
+    "inLanguage": "pt-BR",
+    "isPartOf": { "@type": "Blog", "url": "https://impactotv.alastecno.com/blog.html" },
+    "publisher": { "@type": "Organization", "name": "Impacto TV Mídia", "url": "https://impactotv.alastecno.com/" }
+  }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --white: #FFFFFF;
+      --gold: #C9A244; --gold2: #e8c96a;
+      --black: #020202; --dark: #0a0a0a;
+      --dark2: #111111; --dark3: #1a1a1a;
+      --font-title: 'Cinzel', serif;
+      --font-body:  'Montserrat', sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); background: var(--black); color: var(--white); overflow-x: hidden; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 4rem;
+      background: rgba(2,2,2,.95); backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(201,162,68,.12);
+    }
+    .nav-logo { font-family: var(--font-title); font-size: 1rem; font-weight: 700; letter-spacing: .18em; color: var(--gold); text-decoration: none; text-transform: uppercase; }
+    .nav-logo span { color: var(--white); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { font-size: .7rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.5); text-decoration: none; transition: color .25s; }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-cta { font-size: .7rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--black); background: var(--gold); padding: .6rem 1.4rem; text-decoration: none; transition: background .25s; }
+    .nav-cta:hover, .nav-cta:active { background: var(--gold2); }
+
+    /* ── LOADING / ERROR ── */
+    .state-screen {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center; padding: 2rem;
+    }
+    .spinner { width: 32px; height: 32px; border: 2px solid rgba(201,162,68,.15); border-top-color: var(--gold); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 1.5rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .state-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .state-title { font-family: var(--font-title); font-size: 1.5rem; color: var(--white); margin-bottom: .8rem; }
+    .state-text { font-size: .85rem; color: rgba(255,255,255,.4); line-height: 1.7; }
+    .back-link { display: inline-flex; align-items: center; gap: .5rem; margin-top: 2rem; font-size: .72rem; font-weight: 600; letter-spacing: .15em; text-transform: uppercase; color: var(--gold); text-decoration: none; }
+
+    /* ── ARTICLE HERO ── */
+    .article-hero {
+      padding: 9rem 4rem 4rem;
+      background: var(--dark2);
+      border-bottom: 1px solid rgba(201,162,68,.1);
+      position: relative; overflow: hidden;
+    }
+    .article-hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 50% 80% at 85% 40%, rgba(201,162,68,.06) 0%, transparent 65%);
+    }
+    .article-hero-inner { max-width: 780px; margin: 0 auto; position: relative; z-index: 1; }
+    .article-breadcrumb {
+      display: flex; align-items: center; gap: .6rem; margin-bottom: 2rem;
+      font-size: .62rem; letter-spacing: .15em; text-transform: uppercase;
+    }
+    .article-breadcrumb a { color: rgba(255,255,255,.35); text-decoration: none; transition: color .2s; }
+    .article-breadcrumb a:hover { color: var(--gold); }
+    .article-breadcrumb span { color: rgba(255,255,255,.15); }
+    .article-breadcrumb .current { color: rgba(255,255,255,.5); }
+
+    .article-tag {
+      display: inline-block; font-size: .6rem; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--black); background: var(--gold); padding: .28rem .85rem; margin-bottom: 1.5rem;
+    }
+    .article-emoji { font-size: 3rem; display: block; margin-bottom: 1.2rem; }
+    .article-title {
+      font-family: var(--font-title);
+      font-size: clamp(1.6rem, 3.5vw, 2.8rem);
+      font-weight: 700; line-height: 1.1; margin-bottom: 1.2rem; letter-spacing: -.01em;
+    }
+    .article-meta {
+      display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+      font-size: .68rem; color: rgba(255,255,255,.3); letter-spacing: .08em;
+      padding-top: 1.5rem; border-top: 1px solid rgba(201,162,68,.1);
+    }
+    .article-meta span { display: flex; align-items: center; gap: .4rem; }
+    .article-meta .dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(201,162,68,.4); }
+
+    /* ── CONTENT ── */
+    .article-body { padding: 4rem 4rem 6rem; }
+    .article-body-inner { max-width: 780px; margin: 0 auto; }
+
+    /* tipografía del artículo */
+    .article-content { font-size: .95rem; line-height: 1.95; color: rgba(255,255,255,.72); }
+    .article-content p { margin-bottom: 1.4rem; }
+    .article-content h2 {
+      font-family: var(--font-title); font-size: 1.35rem; font-weight: 600;
+      color: var(--white); margin: 2.5rem 0 1rem; letter-spacing: .03em;
+      padding-left: 1rem; border-left: 2px solid var(--gold);
+    }
+    .article-content h3 {
+      font-family: var(--font-title); font-size: 1rem; font-weight: 600;
+      color: var(--gold2); margin: 2rem 0 .8rem; letter-spacing: .05em;
+    }
+    .article-content strong { color: var(--gold2); font-weight: 600; }
+    .article-content em { color: rgba(255,255,255,.85); font-style: italic; }
+    .article-content ul, .article-content ol {
+      padding-left: 1.5rem; margin-bottom: 1.4rem;
+    }
+    .article-content li { margin-bottom: .5rem; }
+    .article-content blockquote {
+      border-left: 2px solid var(--gold); padding: 1rem 1.5rem;
+      background: rgba(201,162,68,.04); margin: 2rem 0;
+      font-style: italic; color: rgba(255,255,255,.6);
+    }
+    .article-content a { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; }
+    .article-content hr { border: none; border-top: 1px solid rgba(201,162,68,.1); margin: 2rem 0; }
+
+    /* ── CTA FINAL ── */
+    .article-cta {
+      margin-top: 3.5rem; padding: 2.5rem;
+      background: rgba(201,162,68,.05); border: 1px solid rgba(201,162,68,.18);
+      text-align: center;
+    }
+    .article-cta-title { font-family: var(--font-title); font-size: 1.3rem; color: var(--white); margin-bottom: .6rem; }
+    .article-cta-title em { color: var(--gold); font-style: normal; }
+    .article-cta-text { font-size: .82rem; color: rgba(255,255,255,.4); margin-bottom: 1.5rem; line-height: 1.7; }
+    .btn-primary {
+      display: inline-block;
+      font-size: .75rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--black); background: var(--gold); padding: .9rem 2rem;
+      text-decoration: none; position: relative; overflow: hidden; transition: transform .25s;
+    }
+    .btn-primary::before {
+      content: ''; position: absolute; inset: 0;
+      background: var(--gold2); transform: translateX(-101%); transition: transform .35s ease;
+    }
+    .btn-primary:hover, .btn-primary:active { transform: translateY(-2px); }
+    .btn-primary:hover::before, .btn-primary:active::before { transform: translateX(0); }
+    .btn-primary span { position: relative; z-index: 1; }
+
+    /* ── NAV ARTÍCULOS ── */
+    .article-nav {
+      display: flex; gap: 1px; background: rgba(201,162,68,.07);
+      margin-top: 3rem;
+    }
+    .article-nav-btn {
+      flex: 1; padding: 1.4rem 1.5rem;
+      background: var(--black); text-decoration: none;
+      transition: background .2s;
+    }
+    .article-nav-btn:hover { background: rgba(201,162,68,.04); }
+    .article-nav-btn .nav-dir { font-size: .58rem; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); margin-bottom: .4rem; }
+    .article-nav-btn .nav-title { font-family: var(--font-title); font-size: .82rem; color: rgba(255,255,255,.6); line-height: 1.3; }
+    .article-nav-btn.right { text-align: right; }
+
+    /* ── FOOTER ── */
+    footer { background: var(--black); border-top: 1px solid rgba(201,162,68,.08); padding: 2rem 4rem; text-align: center; }
+    .footer-copy { font-size: .72rem; color: rgba(255,255,255,.2); letter-spacing: .05em; }
+    .footer-back { display: inline-flex; align-items: center; gap: .5rem; margin-top: .8rem; font-size: .68rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); text-decoration: none; }
+
+    @media(max-width:768px) { nav { padding: 1rem 1.5rem; } .nav-links { display: none; } .article-hero, .article-body { padding-left: 1.5rem; padding-right: 1.5rem; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">Impacto<span>TV</span></a>
+  <ul class="nav-links">
+    <li><a href="/#psicologia">Estratégia</a></li>
+    <li><a href="/#tecnologia">Tecnologia</a></li>
+    <li><a href="/#mapa">Rede</a></li>
+    <li><a href="blog.html">Blog</a></li>
+    <li><a href="/#contato">Contato</a></li>
+  </ul>
+  <a href="/" class="nav-cta" data-track="nav-quero-anunciar">Quero Anunciar</a>
+</nav>
+
+<!-- Estado: cargando -->
+<div id="state-loading" class="state-screen">
+  <div class="spinner"></div>
+  <p style="font-size:.8rem;color:rgba(255,255,255,.3);letter-spacing:.1em;">Carregando artigo…</p>
+</div>
+
+<!-- Estado: error / no encontrado -->
+<div id="state-error" class="state-screen" style="display:none">
+  <div class="state-icon">📭</div>
+  <div class="state-title">Artigo não encontrado</div>
+  <p class="state-text">Este artigo pode ter sido removido ou o link está incorreto.</p>
+  <a href="blog.html" class="back-link" data-track="back-ver-artigos">← Ver todos os artigos</a>
+</div>
+
+<!-- Contenido del artículo -->
+<div id="article-wrap" style="display:none">
+
+  <div class="article-hero">
+    <div class="article-hero-inner">
+      <nav class="article-breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Início</a>
+        <span>›</span>
+        <a href="blog.html">Blog</a>
+        <span>›</span>
+        <span class="current" id="bc-categoria">Artigo</span>
+      </nav>
+      <div class="article-tag" id="a-categoria">Categoria</div>
+      <span class="article-emoji" id="a-emoji">📄</span>
+      <h1 class="article-title" id="a-titulo">Título do artigo</h1>
+      <div class="article-meta">
+        <span>📅 <span id="a-fecha">Data</span></span>
+        <span class="dot"></span>
+        <span>✍️ Impacto TV Mídia</span>
+        <span class="dot"></span>
+        <span id="a-read-time">5 min de leitura</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="article-body">
+    <div class="article-body-inner">
+
+      <div class="article-content" id="a-content">
+        <!-- conteúdo carregado dinamicamente -->
+      </div>
+
+      <div class="article-cta">
+        <div class="article-cta-title">Pronto para anunciar com <em>impacto real?</em></div>
+        <p class="article-cta-text">Fale com nosso time e descubra o posicionamento ideal para sua marca nas telas DOOH 3D do litoral catarinense.</p>
+        <a href="/#contato" class="btn-primary" data-track="articulo-cta-quero-anunciar"><span>Quero Anunciar →</span></a>
+      </div>
+
+      <div class="article-nav" id="article-nav"></div>
+
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-copy">© 2025 Impacto TV Mídia. Todos os direitos reservados.</div>
+  <a href="blog.html" class="footer-back" data-track="footer-voltar-blog">← Voltar ao blog</a>
+</footer>
+
+<script>
+const SB_URL = 'https://redaqqxoeciycqgjhpbv.supabase.co';
+const SB_KEY = 'sb_publishable_XYeljNeSm2awnovoTvzXiQ_va4cFyvU';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-');
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  return `${parseInt(d)} de ${months[parseInt(m)-1]} de ${y}`;
+}
+
+function calcReadTime(content) {
+  const words = content.replace(/<[^>]+>/g, '').split(/\s+/).length;
+  const mins  = Math.max(1, Math.round(words / 200));
+  return `${mins} min de leitura`;
+}
+
+async function loadArticle() {
+  const params = new URLSearchParams(window.location.search);
+  const slug   = params.get('slug');
+
+  if (!slug) { showError(); return; }
+
+  const { data, error } = await sb
+    .from('blog_posts')
+    .select('*')
+    .eq('slug', slug)
+    .eq('activo', true)
+    .single();
+
+  if (error || !data) { showError(); return; }
+
+  // ── SEO COMPLETO ──
+  const pageUrl = `https://impactotv.alastecno.com/blog-articulo.html?slug=${data.slug}`;
+  const pageTitle = `${data.titulo} – Impacto TV Mídia`;
+  const pageDesc  = data.resumen || '';
+  const pageImg   = data.imagen || 'https://impactotv.alastecno.com/og-image.jpg';
+
+  // title + meta
+  document.title = pageTitle;
+  document.getElementById('page-title').textContent = pageTitle;
+  document.getElementById('page-desc').setAttribute('content', pageDesc);
+
+  // canonical
+  document.getElementById('page-canonical').setAttribute('href', pageUrl);
+
+  // Open Graph
+  document.getElementById('og-title').setAttribute('content', pageTitle);
+  document.getElementById('og-desc').setAttribute('content', pageDesc);
+  document.getElementById('og-url').setAttribute('content', pageUrl);
+  document.getElementById('og-image').setAttribute('content', pageImg);
+
+  // Twitter Card
+  document.getElementById('tw-title').setAttribute('content', pageTitle);
+  document.getElementById('tw-desc').setAttribute('content', pageDesc);
+  document.getElementById('tw-image').setAttribute('content', pageImg);
+
+  // JSON-LD Article — sobrescreve o esqueleto com dados reais
+  const ldEl = document.getElementById('ld-article');
+  if (ldEl) {
+    ldEl.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": data.titulo,
+      "description": pageDesc,
+      "url": pageUrl,
+      "inLanguage": "pt-BR",
+      "datePublished": data.fecha || '',
+      "image": pageImg,
+      "isPartOf": { "@type": "Blog", "url": "https://impactotv.alastecno.com/blog.html" },
+      "publisher": { "@type": "Organization", "name": "Impacto TV Mídia", "url": "https://impactotv.alastecno.com/" },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Início",  "item": "https://impactotv.alastecno.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Blog",    "item": "https://impactotv.alastecno.com/blog.html" },
+          { "@type": "ListItem", "position": 3, "name": data.titulo, "item": pageUrl }
+        ]
+      }
+    });
+  }
+
+  // ── CONTENIDO ──
+  document.getElementById('bc-categoria').textContent = data.categoria;
+  document.getElementById('a-categoria').textContent  = data.categoria;
+  document.getElementById('a-emoji').textContent      = data.emoji || '📄';
+  document.getElementById('a-titulo').textContent     = data.titulo;
+  document.getElementById('a-fecha').textContent      = formatDate(data.fecha);
+  document.getElementById('a-read-time').textContent  = calcReadTime(data.contenido);
+
+  // El contenido puede tener HTML básico
+  const contentEl = document.getElementById('a-content');
+  // Envolver texto plano en párrafos si no tiene tags HTML
+  const hasHTML = /<[a-z][\s\S]*>/i.test(data.contenido);
+  if (hasHTML) {
+    contentEl.innerHTML = data.contenido;
+  } else {
+    // convertir saltos de línea en párrafos
+    contentEl.innerHTML = data.contenido
+      .split(/\n\n+/)
+      .map(p => p.trim() ? `<p>${p.trim().replace(/\n/g, '<br>')}</p>` : '')
+      .filter(Boolean).join('');
+  }
+
+  // ── NAVEGACIÓN ENTRE ARTÍCULOS ──
+  const { data: all } = await sb
+    .from('blog_posts')
+    .select('titulo, slug')
+    .eq('activo', true)
+    .order('fecha', { ascending: false });
+
+  if (all && all.length > 1) {
+    const idx  = all.findIndex(p => p.slug === slug);
+    const prev = idx > 0 ? all[idx - 1] : null;
+    const next = idx < all.length - 1 ? all[idx + 1] : null;
+    const navEl = document.getElementById('article-nav');
+    navEl.innerHTML = `
+      ${prev ? `<a href="blog-articulo.html?slug=${prev.slug}" class="article-nav-btn left" data-track="articulo-nav-prev">
+        <div class="nav-dir">← Anterior</div>
+        <div class="nav-title">${prev.titulo}</div>
+      </a>` : '<div></div>'}
+      ${next ? `<a href="blog-articulo.html?slug=${next.slug}" class="article-nav-btn right" data-track="articulo-nav-next">
+        <div class="nav-dir">Próximo →</div>
+        <div class="nav-title">${next.titulo}</div>
+      </a>` : '<div></div>'}
+    `;
+  }
+
+  // mostrar
+  document.getElementById('state-loading').style.display = 'none';
+  document.getElementById('article-wrap').style.display  = 'block';
+}
+
+function showError() {
+  document.getElementById('state-loading').style.display = 'none';
+  document.getElementById('state-error').style.display   = 'flex';
+}
+
+loadArticle();
+</script>
+  <!-- ── Tracking de clicks → Supabase ── -->
+  <script>
+  (function () {
+    const SUPA_URL = 'https://redaqqxoeciycqgjhpbv.supabase.co';
+    const SUPA_KEY = 'sb_publishable_XYeljNeSm2awnovoTvzXiQ_va4cFyvU';
+    const PAGE     = window.location.pathname || '/';
+    const UA       = navigator.userAgent;
+    let   cachedIp = null;
+
+    async function getIp() {
+      if (cachedIp) return cachedIp;
+      try { const r = await fetch('https://api.ipify.org?format=json'); cachedIp = (await r.json()).ip; }
+      catch (_) { cachedIp = 'unknown'; }
+      return cachedIp;
+    }
+
+    async function track(buttonId, el) {
+      const ip = await getIp();
+      try {
+        await fetch(SUPA_URL + '/rest/v1/click_events', {
+          method: 'POST',
+          headers: {
+            'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+            'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            button_id:   buttonId,
+            ip:          ip,
+            page:        PAGE,
+            user_agent:  UA,
+            button_text: (el.textContent || '').trim().slice(0, 80),
+            href:        el.href || el.getAttribute('href') || '',
+            referrer:    document.referrer || ''
+          })
+        });
+      } catch (_) {}
+    }
+
+    document.addEventListener('click', function (e) {
+      const el = e.target.closest('[data-track]');
+      if (el) track(el.getAttribute('data-track'), el);
+    });
+
+    getIp(); // pre-carga IP al cargar la página
+  })();
+  </script>
+
+</body>
+</html>

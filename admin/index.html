@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin · ImpactoTV</title>
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --accent: #c8985a;
+      --accent2: #e0b578;
+      --text: #e8e6f0;
+      --muted: #7a7d9a;
+      --ok: #2ecc71;
+      --ok-bg: rgba(46,204,113,.12);
+      --warn: #f39c12;
+      --warn-bg: rgba(243,156,18,.12);
+      --err: #e74c3c;
+      --err-bg: rgba(231,76,60,.12);
+      --info: #3498db;
+      --r: 10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 30% 50%, #1e2340 0%, #0f1117 70%);
+    }
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3rem 2.5rem;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 40px 80px rgba(0,0,0,.5);
+    }
+    .login-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--accent);
+      margin-bottom: .4rem;
+    }
+    .login-sub { color: var(--muted); font-size: .85rem; margin-bottom: 2rem; }
+    .login-field { margin-bottom: 1.2rem; }
+    .login-field label {
+      display: block; font-size: .72rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: .8px; margin-bottom: .5rem;
+    }
+    .login-field input {
+      width: 100%; padding: .85rem 1rem;
+      background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: var(--r); color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: .95rem;
+      outline: none; transition: border-color .2s;
+    }
+    .login-field input:focus { border-color: var(--accent); }
+    .login-btn {
+      width: 100%; padding: .95rem;
+      background: var(--accent); color: #1a1000;
+      border: none; border-radius: var(--r);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background .2s, transform .1s;
+      margin-top: .5rem;
+    }
+    .login-btn:hover { background: var(--accent2); transform: translateY(-1px); }
+    .login-err {
+      color: var(--err); font-size: .83rem;
+      margin-top: .75rem; text-align: center;
+      display: none;
+    }
+    .login-err.show { display: block; }
+
+    /* ── APP ── */
+    #app { display: none; }
+
+    /* HEADER */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+      flex-wrap: wrap; gap: .75rem;
+    }
+    .header-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem; color: var(--accent);
+    }
+    .header-brand span { color: var(--muted); font-size: .8rem;
+      font-family: 'DM Sans', sans-serif; font-weight: 400; margin-left: .5rem; }
+    .header-right { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .btn-logout {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); padding: .4rem .9rem;
+      border-radius: 6px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; font-size: .82rem;
+      transition: all .2s;
+    }
+    .btn-logout:hover { border-color: var(--err); color: var(--err); }
+
+    /* MAIN */
+    .main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+    /* STATS */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1.2rem 1.5rem;
+    }
+    .stat-label { font-size: .75rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: .6px; margin-bottom: .4rem; }
+    .stat-value { font-size: 2rem; font-weight: 700; color: var(--text); }
+    .stat-card.gold .stat-value { color: var(--accent); }
+    .stat-card.green .stat-value { color: var(--ok); }
+    .stat-card.blue .stat-value { color: var(--info); }
+    .stat-card.warn .stat-value { color: var(--warn); }
+    .stat-card.err .stat-value { color: var(--err); }
+
+    /* TOOLBAR */
+    .toolbar {
+      display: flex; align-items: center; gap: .75rem;
+      margin-bottom: 1.25rem; flex-wrap: wrap;
+    }
+    .search-wrap { position: relative; flex: 1; min-width: 220px; }
+    .search-wrap input {
+      width: 100%; padding: .7rem 1rem .7rem 2.5rem;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--r); color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: .9rem; outline: none;
+      transition: border-color .2s;
+    }
+    .search-wrap input:focus { border-color: var(--accent); }
+    .search-wrap::before {
+      content: '🔍'; position: absolute; left: .75rem;
+      top: 50%; transform: translateY(-50%); font-size: .85rem;
+    }
+    .filter-select {
+      padding: .7rem 1rem; background: var(--surface);
+      border: 1.5px solid var(--border); border-radius: var(--r);
+      color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: .88rem; outline: none; cursor: pointer;
+    }
+    .btn-csv {
+      padding: .7rem 1.2rem; background: var(--surface2);
+      border: 1.5px solid var(--border); border-radius: var(--r);
+      color: var(--accent); font-family: 'DM Sans', sans-serif;
+      font-size: .88rem; font-weight: 600; cursor: pointer;
+      transition: all .2s; white-space: nowrap;
+    }
+    .btn-csv:hover { background: var(--accent); color: #1a1000; }
+
+    /* TABLE */
+    .table-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      width: 100%; border-collapse: collapse;
+      table-layout: fixed;
+    }
+    thead th {
+      background: var(--surface2); padding: .6rem .6rem;
+      text-align: left; font-size: .68rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: .5px; border-bottom: 1px solid var(--border);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    col.c-nombre  { width: 130px; }
+    col.c-empresa { width: 120px; }
+    col.c-email   { width: 170px; }
+    col.c-tel     { width: 110px; }
+    col.c-tipo    { width: 70px;  }
+    col.c-estado  { width: 150px; }
+    col.c-plan    { width: 90px;  }
+    col.c-venc    { width: 95px;  }
+    col.c-notas   { width: 42px;  }
+    col.c-reg     { width: 80px;  }
+    col.c-acc     { width: 150px; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    td {
+      padding: .6rem .6rem; font-size: .82rem;
+      vertical-align: middle; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    /* BADGES */
+    .badge {
+      display: inline-block; padding: .25rem .65rem;
+      border-radius: 20px; font-size: .72rem; font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-lead      { background: rgba(116,120,160,.2); color: #9094c0; }
+    .badge-activo    { background: var(--ok-bg); color: var(--ok); }
+    .badge-pendiente { background: var(--warn-bg); color: var(--warn); }
+    .badge-vencido   { background: var(--err-bg); color: var(--err); }
+    .badge-cancelado { background: rgba(100,100,120,.15); color: var(--muted); }
+    .badge-sinsus    { background: rgba(100,100,120,.15); color: var(--muted); }
+    .badge-tipo-lead { background: rgba(52,152,219,.15); color: var(--info); }
+    .badge-tipo-cliente { background: rgba(200,152,90,.15); color: var(--accent); }
+
+    /* INLINE EDITABLE */
+    .editable-select {
+      background: transparent; border: none; color: inherit;
+      font-family: 'DM Sans', sans-serif; font-size: .8rem;
+      cursor: pointer; outline: none; padding: .15rem .2rem;
+      border-radius: 4px; width: 100%;
+    }
+    .editable-select:hover { background: var(--surface2); }
+    .editable-select:focus { background: var(--surface2); border: 1px solid var(--accent); }
+
+    .btn-action {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 1rem; padding: .25rem .4rem;
+      border-radius: 4px; transition: all .2s;
+    }
+    .btn-action:hover { color: var(--accent); background: var(--surface2); }
+    .btn-action.del:hover { color: var(--err); }
+    .btn-mini {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--accent); font-size: .7rem; font-weight: 600;
+      padding: .3rem .55rem; border-radius: 6px; cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-mini:hover { background: var(--accent); color: #1a1000; }
+
+    /* MODAL NOTAS */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.6); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem; width: 100%;
+      max-width: 480px; margin: 1rem;
+    }
+    .modal h3 {
+      font-family: 'Playfair Display', serif;
+      color: var(--accent); margin-bottom: 1rem; font-size: 1.2rem;
+    }
+    .modal-sub { color: var(--muted); font-size: .82rem; margin-bottom: 1rem; }
+    .modal textarea {
+      width: 100%; height: 120px; padding: .85rem 1rem;
+      background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: var(--r); color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: .9rem;
+      resize: vertical; outline: none;
+    }
+    .modal textarea:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; gap: .75rem; margin-top: 1rem; justify-content: flex-end; }
+    .btn-modal {
+      padding: .65rem 1.4rem; border-radius: var(--r);
+      font-family: 'DM Sans', sans-serif; font-size: .9rem;
+      font-weight: 600; cursor: pointer; border: none;
+    }
+    .btn-modal-cancel { background: var(--surface2); color: var(--muted); }
+    .btn-modal-save { background: var(--accent); color: #1a1000; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); padding: .8rem 1.3rem;
+      border-radius: var(--r); font-size: .88rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+      transform: translateY(80px); opacity: 0;
+      transition: all .3s ease; z-index: 300;
+      max-width: 360px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.ok { border-color: var(--ok); }
+    .toast.err { border-color: var(--err); }
+
+    /* TABS */
+    .tab-btn {
+      background: none; border: 1px solid var(--border);
+      color: var(--muted); padding: .4rem 1rem;
+      border-radius: 6px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; font-size: .85rem;
+      transition: all .2s;
+    }
+    .tab-btn.active, .tab-btn:hover {
+      background: var(--accent); color: #1a1000;
+      border-color: var(--accent);
+    }
+
+    /* CAMPAÑAS */
+    .camp-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media(max-width:900px){ .camp-grid{ grid-template-columns:1fr; } }
+    .camp-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1.8rem;
+    }
+    .camp-title {
+      font-family: 'Playfair Display', serif;
+      color: var(--accent); font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+    .camp-field { margin-bottom: 1.2rem; }
+    .camp-field label {
+      display: block; font-size: .72rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: .7px; margin-bottom: .45rem;
+    }
+    .camp-field input, .camp-field select, .camp-field textarea {
+      width: 100%; padding: .75rem 1rem;
+      background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: var(--r); color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: .9rem;
+      outline: none; transition: border-color .2s;
+    }
+    .camp-field textarea { height: 140px; resize: vertical; }
+    .camp-field input:focus, .camp-field select:focus,
+    .camp-field textarea:focus { border-color: var(--accent); }
+
+    .camp-resumen {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--r); padding: .75rem 1rem;
+      font-size: .82rem; color: var(--muted);
+      margin-bottom: 1.2rem;
+    }
+    .camp-resumen strong { color: var(--accent2); }
+
+    .btn-enviar {
+      width: 100%; padding: .95rem;
+      background: var(--accent); color: #1a1000;
+      border: none; border-radius: var(--r);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background .2s;
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+    }
+    .btn-enviar:hover { background: var(--accent2); }
+    .btn-enviar:disabled { opacity: .6; cursor: not-allowed; }
+
+    .historial-item {
+      border-bottom: 1px solid var(--border);
+      padding: .9rem 0; font-size: .85rem;
+    }
+    .historial-item:last-child { border-bottom: none; }
+    .historial-item .hist-titulo { font-weight: 600; color: var(--text); }
+    .historial-item .hist-meta { color: var(--muted); font-size: .78rem; margin-top: .2rem; }
+    .historial-item .hist-badge {
+      display: inline-block; padding: .15rem .5rem;
+      border-radius: 10px; font-size: .72rem; font-weight: 600;
+      background: var(--ok-bg); color: var(--ok); margin-left: .4rem;
+    }
+
+    /* SPINNER en botón */
+    .spinner {
+      display: none; width: 16px; height: 16px;
+      border: 2px solid rgba(0,0,0,.2);
+      border-top-color: #1a1000;
+      border-radius: 50%; animation: spin .7s linear infinite;
+    }
+    .spinner.show { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* EMPTY */
+    .empty-state {
+      text-align: center; padding: 4rem 2rem;
+      color: var(--muted);
+    }
+    .empty-state div { font-size: 2.5rem; margin-bottom: 1rem; }
+
+    /* LOADING */
+    .loading-row td {
+      text-align: center; padding: 3rem;
+      color: var(--muted); font-size: .9rem;
+    }
+
+    /* ── ROTATE OVERLAY (mobile portrait) ── */
+    .rotate-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 1.2rem; text-align: center; padding: 2rem;
+    }
+    .rotate-icon {
+      font-size: 3.5rem;
+      animation: rotateHint 2s ease-in-out infinite;
+    }
+    @keyframes rotateHint {
+      0%,100% { transform: rotate(0deg);   }
+      40%      { transform: rotate(-90deg); }
+      60%      { transform: rotate(-90deg); }
+    }
+    .rotate-title {
+      font-family: 'Playfair Display', serif;
+      color: var(--accent); font-size: 1.3rem;
+    }
+    .rotate-sub { color: var(--muted); font-size: .9rem; line-height: 1.5; }
+
+    @media (max-width: 768px) and (orientation: portrait) {
+      .rotate-overlay { display: flex; }
+      #app { visibility: hidden; }
+    }
+
+    @media (max-width: 900px) and (orientation: landscape) {
+      .main { padding: .75rem 1rem; }
+      .header { padding: .6rem 1rem; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); gap: .5rem; margin-bottom: 1rem; }
+      .stat-card { padding: .6rem .8rem; }
+      .stat-value { font-size: 1.4rem; }
+      .stat-label { font-size: .65rem; }
+      table { table-layout: auto; }
+    }
+
+    @media (min-width: 769px) and (max-width: 1100px) {
+      .main { padding: 1.25rem; }
+      table { table-layout: auto; }
+    }
+
+    /* LA VISUAL MARKETING - CREDIT */
+    .la-credit{
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      padding:10px 0 14px;
+      border-top:1px solid var(--border);
+      margin-top:auto;
+    }
+    .la-credit-label{
+      font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;
+      color:var(--muted);
+    }
+    .la-credit-link{
+      display:flex;align-items:center;
+      opacity:.65;transition:opacity .2s,transform .2s;
+    }
+    .la-credit-link:hover{opacity:1;transform:scale(1.06)}
+    .la-credit-link img{height:28px;width:auto;filter:brightness(0) invert(1) opacity(.4);}
+  </style>
+  <!-- OneSignal Push — Admin -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">ImpactoTV</div>
+    <div class="login-sub">Panel de administración</div>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="login-user" placeholder="admin@impactotv.com"
+             onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••••"
+             onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-err" id="login-err">Email o contraseña incorrectos.</div>
+  </div>
+</div>
+
+<!-- ══ ROTATE OVERLAY (mobile portrait) ══ -->
+<div class="rotate-overlay">
+  <div class="rotate-icon">📱</div>
+  <div class="rotate-title">Girá el dispositivo</div>
+  <div class="rotate-sub">Para ver la tabla completa<br>con todas las columnas,<br>rotá el celular en horizontal.</div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+
+  <div class="header">
+    <div class="header-brand">
+      ImpactoTV <span>· Admin CRM</span>
+    </div>
+    <div class="header-right">
+      <button class="tab-btn active" id="tab-clientes" onclick="switchTab('clientes')">👥 Clientes</button>
+      <button class="tab-btn" id="tab-campanas" onclick="switchTab('campanas')">📧 Campañas</button>
+      <button class="tab-btn" id="tab-notificaciones" onclick="switchTab('notificaciones')">🔔 Notificaciones</button>
+      <a href="adminblog.html" class="btn-logout" style="text-decoration:none;display:inline-flex;align-items:center;border-color:var(--accent);color:var(--accent)" title="Ir al panel del blog">📝 Blog</a>
+      <span id="last-update" style="font-size:.78rem;color:var(--muted);margin-left:.5rem"></span>
+      <button class="btn-logout" onclick="loadData()" style="border-color:var(--border);color:var(--muted)" title="Actualizar datos">🔄</button>
+      <button class="btn-logout" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+
+  <!-- ══ TAB CLIENTES (vista unificada leads + clientes + suscripciones) ══ -->
+  <div class="main" id="panel-clientes">
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total contactos</div>
+        <div class="stat-value" id="stat-total">—</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Leads nuevos</div>
+        <div class="stat-value" id="stat-leads">—</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Clientes activos</div>
+        <div class="stat-value" id="stat-activos">—</div>
+      </div>
+      <div class="stat-card warn">
+        <div class="stat-label">Pendientes de pago</div>
+        <div class="stat-value" id="stat-pendientes">—</div>
+      </div>
+      <div class="stat-card err">
+        <div class="stat-label">Vencidos (deben)</div>
+        <div class="stat-value" id="stat-vencidos">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Cancelados</div>
+        <div class="stat-value" id="stat-cancelados">—</div>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input type="text" id="search-input" placeholder="Buscar por nombre, empresa, email o teléfono…"
+               oninput="renderTable()"/>
+      </div>
+      <select class="filter-select" id="filter-tipo" onchange="renderTable()">
+        <option value="">Todos (leads + clientes)</option>
+        <option value="lead">Solo leads</option>
+        <option value="cliente">Solo clientes</option>
+      </select>
+      <select class="filter-select" id="filter-estado" onchange="renderTable()">
+        <option value="">Todos los estados</option>
+        <option value="Lead nuevo">Lead nuevo</option>
+        <option value="Cliente activo">Cliente activo</option>
+        <option value="Cliente — pendiente">Pendiente de pago</option>
+        <option value="Cliente — vencido">Vencido</option>
+        <option value="Cliente — cancelado">Cancelado</option>
+        <option value="Cliente sin suscripción">Sin suscripción</option>
+      </select>
+      <button class="btn-csv" onclick="exportCSV()">⬇ Exportar CSV</button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table>
+        <colgroup>
+          <col class="c-nombre"><col class="c-empresa"><col class="c-email"><col class="c-tel">
+          <col class="c-tipo"><col class="c-estado"><col class="c-plan"><col class="c-venc">
+          <col class="c-notas"><col class="c-reg"><col class="c-acc">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Empresa</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th>Plan</th>
+            <th>Vencimiento</th>
+            <th>Notas</th>
+            <th>Registrado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr class="loading-row"><td colspan="11">Cargando datos…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /tab clientes -->
+
+  <!-- ══ TAB CAMPAÑAS (promos por email) ══ -->
+  <div id="panel-campanas" class="main" style="display:none">
+    <div class="camp-grid">
+
+      <div class="camp-card">
+        <h3 class="camp-title">📧 Nueva campaña por email</h3>
+
+        <div class="camp-field">
+          <label>Asunto</label>
+          <input type="text" id="camp-asunto" placeholder="Ej: 10% de desconto na renovação"/>
+        </div>
+
+        <div class="camp-field">
+          <label>Mensaje</label>
+          <textarea id="camp-mensaje" placeholder="Escreva aqui a mensagem para os clientes (em português, se for o caso)…"></textarea>
+        </div>
+
+        <div class="camp-field">
+          <label>Destinatarios</label>
+          <select id="camp-filtro" onchange="actualizarResumenEmail()">
+            <option value="todos">Todos los clientes</option>
+            <option value="Cliente activo">Solo clientes activos</option>
+            <option value="Cliente — pendiente">Solo pendientes de pago</option>
+            <option value="Cliente — vencido">Solo vencidos</option>
+            <option value="Cliente sin suscripción">Solo sin suscripción</option>
+          </select>
+        </div>
+
+        <div class="camp-resumen" id="camp-resumen-email">Cargando destinatarios…</div>
+
+        <button class="btn-enviar" id="btn-enviar-camp-email" onclick="enviarCampanaEmail()">
+          <span id="camp-email-spinner" class="spinner"></span>
+          <span id="camp-email-btn-text">🚀 Enviar campaña</span>
+        </button>
+        <p style="color:var(--muted);font-size:.75rem;margin-top:.8rem">
+          Se manda por mail (SMTP propio), uno por uno, a los clientes que coincidan con el filtro elegido. No se manda a leads, solo a clientes ya convertidos.
+        </p>
+      </div>
+
+      <div class="camp-card">
+        <h3 class="camp-title">🕓 Historial</h3>
+        <div id="historial-email-list">
+          <div style="color:var(--muted);font-size:.85rem">Cargando…</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- /tab campañas -->
+
+  <!-- ══ TAB NOTIFICACIONES (push al admin, no a clientes) ══ -->
+  <div id="panel-notificaciones" class="main" style="display:none">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
+
+      <!-- COLUMNA IZQUIERDA -->
+      <div style="display:flex;flex-direction:column;gap:1.5rem">
+
+        <!-- TU DISPOSITIVO -->
+        <div class="camp-card">
+          <h3 class="camp-title">📱 Tu dispositivo</h3>
+
+          <div id="notif-estado-push" style="
+            padding:.9rem 1.1rem;border-radius:8px;margin-bottom:1.2rem;
+            font-size:.88rem;background:var(--surface2);border:1px solid var(--border)">
+            Verificando estado…
+          </div>
+
+          <div class="camp-field">
+            <label>Tu nombre (para identificar el dispositivo)</label>
+            <input type="text" id="notif-nombre" placeholder="Ej: Federico · Celular"/>
+          </div>
+
+          <div style="display:flex;gap:.75rem">
+            <button id="btn-suscribir" onclick="suscribirAdmin()"
+              style="flex:1;padding:.85rem;background:var(--ok);color:#0a1a0a;
+              border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;
+              font-size:.95rem;font-weight:700;cursor:pointer">
+              🔔 Activar notificaciones
+            </button>
+            <button id="btn-desuscribir" onclick="desuscribirAdmin()"
+              style="flex:1;padding:.85rem;background:var(--surface2);
+              color:var(--err);border:1px solid var(--err);border-radius:var(--r);
+              font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;
+              cursor:pointer;display:none">
+              🔕 Desactivar
+            </button>
+          </div>
+          <p style="color:var(--muted);font-size:.75rem;margin-top:.8rem">
+            Esto es para que <strong>vos</strong> recibas un push cuando entra un lead o cliente nuevo. No tiene nada que ver con mandarle promos a tus clientes (eso es la pestaña Campañas, por mail).
+          </p>
+        </div>
+
+        <!-- CONFIG EMAILS DE AVISO -->
+        <div class="camp-card">
+          <h3 class="camp-title">✉️ Emails de aviso</h3>
+          <p style="color:var(--muted);font-size:.83rem;margin-bottom:1.2rem">
+            Estos emails reciben un aviso cada vez que se registra un lead o cliente nuevo (vía la función sync-impacto3d-airtable).
+          </p>
+
+          <div class="camp-field">
+            <label>Email remitente</label>
+            <input type="email" id="notif-email-desde" placeholder="impactotv@alastecno.com"/>
+          </div>
+
+          <div class="camp-field">
+            <label>Emails destinatarios (uno por línea)</label>
+            <textarea id="notif-emails-lista"
+              style="height:100px;width:100%;padding:.85rem 1rem;
+              background:var(--surface2);border:1.5px solid var(--border);
+              border-radius:var(--r);color:var(--text);
+              font-family:'DM Sans',sans-serif;font-size:.9rem;
+              outline:none;resize:vertical"
+              placeholder="impactotv@alastecno.com"></textarea>
+          </div>
+
+          <div class="camp-field" style="display:flex;align-items:center;gap:.75rem">
+            <label style="margin:0;text-transform:none;font-size:.9rem;font-weight:500;color:var(--text)">
+              Notificaciones activas
+            </label>
+            <input type="checkbox" id="notif-activa"
+              style="width:18px;height:18px;cursor:pointer;accent-color:var(--ok)"/>
+          </div>
+
+          <button onclick="guardarConfigNotif()"
+            style="width:100%;padding:.85rem;background:var(--accent);color:#1a1000;
+            border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;
+            font-size:.95rem;font-weight:700;cursor:pointer;margin-top:.5rem">
+            💾 Guardar configuración
+          </button>
+        </div>
+
+      </div>
+
+      <!-- COLUMNA DERECHA: DISPOSITIVOS SUSCRITOS -->
+      <div class="camp-card" style="height:fit-content">
+        <h3 class="camp-title">👥 Dispositivos suscritos</h3>
+        <p style="color:var(--muted);font-size:.83rem;margin-bottom:1.2rem">
+          Cada fila es un dispositivo tuyo que recibirá el push al registrarse un contacto nuevo.
+        </p>
+        <div id="notif-suscriptores-lista">
+          <div style="color:var(--muted);font-size:.88rem">Cargando…</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- /tab notificaciones -->
+
+  <!-- MODAL NOTAS -->
+  <div class="modal-overlay" id="modal-notas">
+    <div class="modal">
+      <h3>📝 Notas</h3>
+      <div class="modal-sub" id="modal-nombre-label"></div>
+      <textarea id="modal-textarea" placeholder="Escribí observaciones sobre este contacto…"></textarea>
+      <div class="modal-actions">
+        <button class="btn-modal btn-modal-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="btn-modal btn-modal-save" onclick="saveNota()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <div class="la-credit"><span class="la-credit-label">Creado por</span><a class="la-credit-link" href="https://lavisualmk.alastecno.com" target="_blank" rel="noopener" title="LA Visual Marketing"><img src="https://lavisualmk.alastecno.com/lavisual.png" alt="LA Visual Marketing" style="height:48px;width:auto;object-fit:contain;"></a></div>
+
+</div><!-- /app -->
+
+<script>
+/* ══════════════════════════════════════════════════
+   🕐  TIMEZONE HELPERS (America/Sao_Paulo, UTC-3)
+══════════════════════════════════════════════════ */
+function nowBR() {
+  return new Date().toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' }) + '-03:00';
+}
+function todayBR() {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+}
+
+/* ══════════════════════════════════════════════════
+   ⚙️  CONFIGURACIÓN — ver config.js
+   Claves necesarias en config.js (todas son PÚBLICAS, van en el navegador):
+     APP_CONFIG.supabaseUrl
+     APP_CONFIG.supabaseAnonKey
+     APP_CONFIG.oneSignalAdminAppId   (App de OneSignal nueva, SOLO para ImpactoTV)
+     APP_CONFIG.serviceWorkerPath
+     APP_CONFIG.serviceWorkerScope
+
+   El REST API Key de OneSignal NUNCA va acá (es secreto, server-side only,
+   se configura como Secret de Supabase Edge Functions, lo usa notify-new-lead).
+══════════════════════════════════════════════════ */
+const SUPABASE_URL  = APP_CONFIG.supabaseUrl;
+const SUPABASE_ANON = APP_CONFIG.supabaseAnonKey;
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let allRows  = [];
+let editingId = null;
+
+/* ── LOGIN (Supabase Auth real) ── */
+async function doLogin() {
+  const email = document.getElementById('login-user').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  document.getElementById('login-err').classList.remove('show');
+
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+
+  if (error) {
+    document.getElementById('login-err').textContent = 'Email o contraseña incorrectos.';
+    document.getElementById('login-err').classList.add('show');
+    document.getElementById('login-pass').value = '';
+    return;
+  }
+  mostrarApp();
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-err').classList.remove('show');
+}
+
+function mostrarApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadData();
+}
+
+/* Si ya había una sesión activa guardada por el navegador, entra directo */
+(async () => {
+  const { data } = await sb.auth.getSession();
+  if (data.session) mostrarApp();
+})();
+
+/* ── CARGAR DATOS (vista unificada) ── */
+async function loadData() {
+  const { data, error } = await sb
+    .from('v_crm_impacto3d')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) { showToast('Error al cargar: ' + error.message, 'err'); return; }
+
+  allRows = data || [];
+  updateStats();
+  renderTable();
+  document.getElementById('last-update').textContent =
+    'Actualizado: ' + new Date().toLocaleTimeString('es-AR');
+}
+
+/* ── STATS ── */
+function updateStats() {
+  const total      = allRows.length;
+  const leads      = allRows.filter(r => r.tipo === 'lead').length;
+  const activos    = allRows.filter(r => r.estado_display === 'Cliente activo').length;
+  const pendientes = allRows.filter(r => r.estado_display === 'Cliente — pendiente').length;
+  const vencidos   = allRows.filter(r => r.estado_display === 'Cliente — vencido').length;
+  const cancelados = allRows.filter(r => r.estado_display === 'Cliente — cancelado').length;
+
+  document.getElementById('stat-total').textContent      = total;
+  document.getElementById('stat-leads').textContent      = leads;
+  document.getElementById('stat-activos').textContent    = activos;
+  document.getElementById('stat-pendientes').textContent = pendientes;
+  document.getElementById('stat-vencidos').textContent   = vencidos;
+  document.getElementById('stat-cancelados').textContent = cancelados;
+}
+
+/* ── BADGES ── */
+function estadoBadgeClass(estado) {
+  return {
+    'Lead nuevo':              'badge-lead',
+    'Cliente activo':          'badge-activo',
+    'Cliente — pendiente':     'badge-pendiente',
+    'Cliente — vencido':       'badge-vencido',
+    'Cliente — cancelado':     'badge-cancelado',
+    'Cliente sin suscripción': 'badge-sinsus',
+  }[estado] || 'badge-sinsus';
+}
+
+/* ── RENDER TABLA ── */
+function renderTable() {
+  const q      = document.getElementById('search-input').value.toLowerCase();
+  const fTipo  = document.getElementById('filter-tipo').value;
+  const fEstado= document.getElementById('filter-estado').value;
+
+  let rows = allRows.filter(r => {
+    const matchQ = !q ||
+      (r.nombre  || '').toLowerCase().includes(q) ||
+      (r.empresa || '').toLowerCase().includes(q) ||
+      (r.email   || '').toLowerCase().includes(q) ||
+      (r.telefono|| '').toLowerCase().includes(q);
+    const matchTipo  = !fTipo   || r.tipo === fTipo;
+    const matchEstado= !fEstado || r.estado_display === fEstado;
+    return matchQ && matchTipo && matchEstado;
+  });
+
+  const tbody = document.getElementById('tbody');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="11">
+      <div class="empty-state"><div>🔍</div>Sin resultados para los filtros aplicados.</div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const fecha = d => d ? new Date(d).toLocaleDateString('es-AR') : '—';
+    const notas = (r.notas || '').replace(/"/g,'&quot;');
+    const tipoBadge = r.tipo === 'lead' ? 'badge-tipo-lead' : 'badge-tipo-cliente';
+
+    let acciones = '';
+    if (r.tipo === 'lead') {
+      acciones = `
+        <button class="btn-mini" onclick="convertirACliente('${r.id}')" title="Crear como cliente">➕ Cliente</button>
+        <button class="btn-action" onclick="toggleContactado('${r.id}', ${!r.contactado})"
+          title="${r.contactado ? 'Marcar como no contactado' : 'Marcar como contactado'}">
+          ${r.contactado ? '✓' : '📞'}
+        </button>
+        <button class="btn-action del" onclick="deleteLead('${r.id}','${(r.nombre||'').replace(/'/g,"\\'")}')" title="Eliminar lead">🗑</button>`;
+    } else {
+      acciones = `
+        <select class="editable-select" onchange="toggleActivoCliente('${r.id}', this.value==='Activo')" style="width:90px">
+          <option${r.activo ? ' selected' : ''}>Activo</option>
+          <option${!r.activo ? ' selected' : ''}>Inactivo</option>
+        </select>`;
+    }
+
+    return `<tr data-id="${r.id}">
+      <td><strong>${r.nombre || '—'}</strong></td>
+      <td style="color:var(--muted)">${r.empresa || '—'}</td>
+      <td style="color:var(--muted)">${r.email || '—'}</td>
+      <td>${r.telefono || '—'}</td>
+      <td><span class="badge ${tipoBadge}">${r.tipo === 'lead' ? 'Lead' : 'Cliente'}</span></td>
+      <td><span class="badge ${estadoBadgeClass(r.estado_display)}">${r.estado_display}</span></td>
+      <td>${r.plan_nombre || '—'}</td>
+      <td style="color:var(--muted)">${fecha(r.fecha_vencimiento)}</td>
+      <td>
+        <button class="btn-action" onclick="openModal('${r.id}','${r.tipo}','${(r.nombre||'').replace(/'/g,"\\'")}','${notas}')"
+          title="${r.notas || 'Sin notas'}">
+          ${r.notas ? '📝' : '➕'}
+        </button>
+      </td>
+      <td style="color:var(--muted);font-size:.78rem;white-space:nowrap">${fecha(r.created_at)}</td>
+      <td style="white-space:nowrap">${acciones}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── ROUTING DE ESCRITURA: lead -> leads_impacto3d, cliente -> clientes ── */
+function tablaPorTipo(tipo) {
+  return tipo === 'lead' ? 'leads_impacto3d' : 'clientes';
+}
+
+async function saveField(id, tipo, field, value) {
+  const { error } = await sb.from(tablaPorTipo(tipo)).update({ [field]: value }).eq('id', id);
+  if (error) { showToast('Error al guardar: ' + error.message, 'err'); return; }
+  const idx = allRows.findIndex(r => r.id === id);
+  if (idx >= 0) allRows[idx][field] = value;
+  showToast('Guardado ✓', 'ok');
+}
+
+async function toggleContactado(id, value) {
+  await saveField(id, 'lead', 'contactado', value);
+  renderTable();
+}
+
+async function toggleActivoCliente(id, value) {
+  await saveField(id, 'cliente', 'activo', value);
+  renderTable();
+}
+
+/* ── CONVERTIR LEAD EN CLIENTE ── */
+async function convertirACliente(id) {
+  const row = allRows.find(r => r.id === id);
+  if (!row) return;
+  if (!confirm(`¿Convertir a "${row.nombre}" en cliente? Se va a crear su acceso.`)) return;
+
+  const token = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+
+  const { error } = await sb.from('clientes').insert({
+    nombre: row.nombre,
+    empresa: row.empresa,
+    email: row.email,
+    telefono: row.telefono,
+    token_acceso: token,
+    activo: true,
+  });
+
+  if (error) { showToast('Error: ' + error.message, 'err'); return; }
+
+  showToast('✓ Cliente creado', 'ok');
+  prompt('Cliente creado. Token de acceso (Ctrl+C para copiar):', token);
+  loadData();
+}
+
+/* ── ELIMINAR LEAD (los clientes no se eliminan, se desactivan) ── */
+async function deleteLead(id, nombre) {
+  if (!confirm(`¿Eliminar el lead de "${nombre}"? Esta acción no se puede deshacer.`)) return;
+  const { error } = await sb.from('leads_impacto3d').delete().eq('id', id);
+  if (error) { showToast('Error: ' + error.message, 'err'); return; }
+  allRows = allRows.filter(r => r.id !== id);
+  updateStats();
+  renderTable();
+  showToast(`${nombre} eliminado.`, 'ok');
+}
+
+/* ── MODAL NOTAS ── */
+let modalId = null;
+let modalTipo = null;
+function openModal(id, tipo, nombre, notasActuales) {
+  modalId = id;
+  modalTipo = tipo;
+  document.getElementById('modal-nombre-label').textContent = nombre;
+  document.getElementById('modal-textarea').value = notasActuales.replace(/&quot;/g,'"');
+  document.getElementById('modal-notas').classList.add('show');
+  document.getElementById('modal-textarea').focus();
+}
+function closeModal() {
+  document.getElementById('modal-notas').classList.remove('show');
+  modalId = null; modalTipo = null;
+}
+async function saveNota() {
+  const notas = document.getElementById('modal-textarea').value.trim();
+  await saveField(modalId, modalTipo, 'notas', notas || null);
+  closeModal();
+  renderTable();
+}
+document.getElementById('modal-notas').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+/* ── EXPORTAR CSV ── */
+function exportCSV() {
+  const headers = ['Nombre','Empresa','Email','Teléfono','Tipo','Estado','Plan','Vencimiento','Notas','Registrado'];
+  const rows = allRows.map(r => [
+    r.nombre, r.empresa, r.email, r.telefono,
+    r.tipo, r.estado_display, r.plan_nombre || '',
+    r.fecha_vencimiento || '',
+    (r.notas || '').replace(/\n/g,' '),
+    r.created_at ? new Date(r.created_at).toLocaleDateString('es-AR') : '',
+  ].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `crm_impactotv_${todayBR()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exportado ✓', 'ok');
+}
+
+/* ── TOAST ── */
+let toastTimer = null;
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ══════════════════════════════════════════════════
+   TABS
+══════════════════════════════════════════════════ */
+function switchTab(tab) {
+  document.getElementById('panel-clientes').style.display       = tab === 'clientes'       ? 'block' : 'none';
+  document.getElementById('panel-campanas').style.display       = tab === 'campanas'       ? 'block' : 'none';
+  document.getElementById('panel-notificaciones').style.display = tab === 'notificaciones' ? 'block' : 'none';
+  document.getElementById('tab-clientes').classList.toggle('active',       tab === 'clientes');
+  document.getElementById('tab-campanas').classList.toggle('active',       tab === 'campanas');
+  document.getElementById('tab-notificaciones').classList.toggle('active', tab === 'notificaciones');
+  if (tab === 'campanas')       { actualizarResumenEmail(); cargarHistorialEmail(); }
+  if (tab === 'notificaciones') loadNotificaciones();
+}
+
+/* ══════════════════════════════════════════════════
+   CAMPAÑAS POR EMAIL
+══════════════════════════════════════════════════ */
+let historialEmail = [];
+
+function getDestinatariosEmail(filtro) {
+  return allRows.filter(r => r.tipo === 'cliente' && r.email &&
+    (filtro === 'todos' || r.estado_display === filtro));
+}
+
+function actualizarResumenEmail() {
+  const filtro = document.getElementById('camp-filtro').value;
+  const destinatarios = getDestinatariosEmail(filtro);
+  document.getElementById('camp-resumen-email').innerHTML =
+    `Se va a enviar a <strong>${destinatarios.length}</strong> destinatario(s).`;
+}
+
+async function enviarCampanaEmail() {
+  const asunto  = document.getElementById('camp-asunto').value.trim();
+  const mensaje = document.getElementById('camp-mensaje').value.trim();
+  const filtro  = document.getElementById('camp-filtro').value;
+
+  if (!asunto || !mensaje) { showToast('Completá asunto y mensaje', 'err'); return; }
+
+  const destinatarios = getDestinatariosEmail(filtro);
+  if (!destinatarios.length) { showToast('No hay destinatarios para ese filtro', 'err'); return; }
+  if (!confirm(`¿Enviar este mail a ${destinatarios.length} cliente(s)?`)) return;
+
+  document.getElementById('camp-email-spinner').classList.add('show');
+  document.getElementById('btn-enviar-camp-email').disabled = true;
+
+  try {
+    const { data, error } = await sb.functions.invoke('send-campaign-email', {
+      body: {
+        subject: asunto,
+        html: mensaje.replace(/\n/g, '<br>'),
+        recipients: destinatarios.map(d => d.email),
+      },
+    });
+    if (error) throw error;
+
+    showToast(`✓ Campaña enviada (${data?.enviados ?? destinatarios.length}/${destinatarios.length})`, 'ok');
+    await registrarHistorialEmail(asunto, data?.enviados ?? destinatarios.length, destinatarios.length);
+    document.getElementById('camp-asunto').value = '';
+    document.getElementById('camp-mensaje').value = '';
+  } catch (e) {
+    showToast('Error al enviar: ' + e.message, 'err');
+  } finally {
+    document.getElementById('camp-email-spinner').classList.remove('show');
+    document.getElementById('btn-enviar-camp-email').disabled = false;
+  }
+}
+
+async function registrarHistorialEmail(asunto, enviados, total) {
+  historialEmail.unshift({ asunto, enviados, total, fecha: nowBR() });
+  historialEmail = historialEmail.slice(0, 20);
+  await sb.from('admin_config').upsert(
+    { clave: 'campanas_email_log', valor: JSON.stringify(historialEmail) },
+    { onConflict: 'clave' }
+  );
+  renderHistorialEmail();
+}
+
+async function cargarHistorialEmail() {
+  const { data } = await sb.from('admin_config').select('valor').eq('clave', 'campanas_email_log').maybeSingle();
+  try { historialEmail = data ? JSON.parse(data.valor) : []; } catch (e) { historialEmail = []; }
+  renderHistorialEmail();
+}
+
+function renderHistorialEmail() {
+  const el = document.getElementById('historial-email-list');
+  if (!historialEmail.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Sin campañas enviadas todavía.</div>';
+    return;
+  }
+  el.innerHTML = historialEmail.map(h => `
+    <div class="historial-item">
+      <div class="hist-titulo">${h.asunto}<span class="hist-badge">${h.enviados}/${h.total} envíos</span></div>
+      <div class="hist-meta">${new Date(h.fecha).toLocaleString('es-AR')}</div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════
+   NOTIFICACIONES — push al ADMIN (OneSignal)
+══════════════════════════════════════════════════ */
+const OS_INTERNO_APP_ID = APP_CONFIG.oneSignalAdminAppId;
+
+let osInternoListo = false;
+
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: OS_INTERNO_APP_ID,
+    notifyButton: { enable: false },
+    autoResubscribe: true,
+    serviceWorkerPath: APP_CONFIG.serviceWorkerPath,
+    serviceWorkerParam: { scope: APP_CONFIG.serviceWorkerScope },
+  });
+  osInternoListo = true;
+  actualizarEstadoPush();
+});
+
+async function actualizarEstadoPush() {
+  const el     = document.getElementById('notif-estado-push');
+  const btnSub = document.getElementById('btn-suscribir');
+  const btnDes = document.getElementById('btn-desuscribir');
+  if (!el) return;
+
+  if (!osInternoListo) { el.innerHTML = '⏳ Inicializando…'; return; }
+
+  try {
+    const suscripto = OneSignal.User.PushSubscription.optedIn;
+    const playerId  = OneSignal.User.PushSubscription.id;
+
+    if (suscripto && playerId) {
+      el.style.background  = 'var(--ok-bg)';
+      el.style.borderColor = 'var(--ok)';
+      el.innerHTML = `<span style="color:var(--ok)">✓ Notificaciones activas en este dispositivo</span>
+        <div style="color:var(--muted);font-size:.75rem;margin-top:.3rem">ID: ${playerId.slice(0,18)}…</div>`;
+      btnSub.style.display = 'flex';
+      btnSub.textContent   = '💾 Guardar en la lista';
+      btnDes.style.display = 'flex';
+    } else {
+      el.style.background  = 'var(--surface2)';
+      el.style.borderColor = 'var(--border)';
+      el.innerHTML = '<span style="color:var(--muted)">⚪ Notificaciones no activadas en este dispositivo</span>';
+      btnSub.style.display = 'flex';
+      btnDes.style.display = 'none';
+    }
+  } catch(e) {
+    el.innerHTML = '<span style="color:var(--muted)">⚪ Estado desconocido</span>';
+  }
+}
+
+async function suscribirAdmin() {
+  const nombre = document.getElementById('notif-nombre').value.trim();
+  if (!nombre) { showToast('Escribí tu nombre primero', 'err'); return; }
+  if (!osInternoListo) { showToast('OneSignal aún no está listo', 'err'); return; }
+
+  try {
+    let playerId = OneSignal.User.PushSubscription.id;
+
+    if (!playerId) {
+      await OneSignal.Notifications.requestPermission();
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        playerId = OneSignal.User.PushSubscription.id;
+        if (playerId) break;
+      }
+    }
+
+    if (!playerId) {
+      showToast('No se pudo obtener el ID. Verificá que aceptaste el permiso.', 'err');
+      return;
+    }
+
+    const ua      = navigator.userAgent;
+    const browser = ua.includes('Chrome') ? 'Chrome' : ua.includes('Firefox') ? 'Firefox' : ua.includes('Safari') ? 'Safari' : 'Navegador';
+    const os      = ua.includes('iPhone') || ua.includes('iPad') ? 'iOS' : ua.includes('Android') ? 'Android' : ua.includes('Win') ? 'Windows' : ua.includes('Mac') ? 'Mac' : 'PC';
+
+    const { error } = await sb.from('admin_suscriptores').upsert({
+      nombre,
+      onesignal_player_id: playerId,
+      dispositivo: `${browser} · ${os}`,
+      activo: true,
+      ultimo_acceso: new Date().toISOString(),
+    }, { onConflict: 'onesignal_player_id' });
+
+    if (error) throw error;
+    showToast('✓ Notificaciones activadas', 'ok');
+    actualizarEstadoPush();
+    loadSuscriptores();
+  } catch(e) {
+    showToast('Error: ' + e.message, 'err');
+  }
+}
+
+async function desuscribirAdmin() {
+  if (!confirm('¿Desactivar notificaciones en este dispositivo?')) return;
+  try {
+    const playerId = OneSignal.User.PushSubscription.id;
+    await OneSignal.User.PushSubscription.optOut();
+    if (playerId) {
+      await sb.from('admin_suscriptores').update({ activo: false }).eq('onesignal_player_id', playerId);
+    }
+    showToast('Notificaciones desactivadas', 'ok');
+    actualizarEstadoPush();
+    loadSuscriptores();
+  } catch(e) {
+    showToast('Error: ' + e.message, 'err');
+  }
+}
+
+async function loadSuscriptores() {
+  const { data, error } = await sb.from('admin_suscriptores').select('*').order('created_at', { ascending: false });
+  if (error) { showToast('Error al cargar suscriptores', 'err'); return; }
+  renderSuscriptores(data || []);
+}
+
+function renderSuscriptores(lista) {
+  const el = document.getElementById('notif-suscriptores-lista');
+  if (!lista.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Sin dispositivos suscritos aún.</div>';
+    return;
+  }
+  el.innerHTML = lista.map(s => `
+    <div style="display:flex;align-items:center;justify-content:space-between;
+      padding:.85rem 1rem;border-radius:8px;margin-bottom:.6rem;
+      background:var(--surface2);border:1px solid var(--border)">
+      <div>
+        <div style="font-weight:600;font-size:.9rem">${s.nombre || 'Sin nombre'}</div>
+        <div style="color:var(--muted);font-size:.75rem;margin-top:.2rem">
+          ${s.dispositivo || '—'} · ${new Date(s.created_at).toLocaleDateString('es-AR')}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.6rem">
+        <span style="font-size:.75rem;padding:.25rem .6rem;border-radius:20px;
+          background:${s.activo ? 'var(--ok-bg)' : 'var(--err-bg)'};
+          color:${s.activo ? 'var(--ok)' : 'var(--err)'}">
+          ${s.activo ? '● Activo' : '○ Inactivo'}
+        </span>
+        <button onclick="eliminarSuscriptor('${s.id}')"
+          style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;padding:.2rem"
+          title="Eliminar">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+async function eliminarSuscriptor(id) {
+  if (!confirm('¿Eliminar este dispositivo?')) return;
+  const { error } = await sb.from('admin_suscriptores').delete().eq('id', id);
+  if (error) { showToast('Error al eliminar', 'err'); return; }
+  showToast('Dispositivo eliminado', 'ok');
+  loadSuscriptores();
+}
+
+async function loadConfigNotif() {
+  const { data, error } = await sb.from('admin_config').select('*');
+  if (error || !data) return;
+  const cfg = {};
+  data.forEach(r => cfg[r.clave] = r.valor);
+  try {
+    const emails = JSON.parse(cfg['emails_notificacion'] || '[]');
+    document.getElementById('notif-emails-lista').value = emails.join('\n');
+  } catch(e) {}
+  document.getElementById('notif-email-desde').value = cfg['notif_email_desde'] || '';
+  document.getElementById('notif-activa').checked = cfg['notif_nuevo_lead_activa'] !== 'false';
+}
+
+async function guardarConfigNotif() {
+  const emailsRaw = document.getElementById('notif-emails-lista').value;
+  const desde     = document.getElementById('notif-email-desde').value.trim();
+  const activa    = document.getElementById('notif-activa').checked;
+
+  const emails = emailsRaw.split('\n').map(e => e.trim()).filter(e => e.includes('@'));
+  const updates = [
+    { clave: 'emails_notificacion',     valor: JSON.stringify(emails) },
+    { clave: 'notif_email_desde',       valor: desde },
+    { clave: 'notif_nuevo_lead_activa', valor: String(activa) },
+  ];
+
+  const { error } = await sb.from('admin_config').upsert(updates, { onConflict: 'clave' });
+  if (error) { showToast('Error al guardar: ' + error.message, 'err'); return; }
+  showToast('✓ Configuración guardada', 'ok');
+}
+
+async function loadNotificaciones() {
+  await Promise.all([ loadSuscriptores(), loadConfigNotif() ]);
+  actualizarEstadoPush();
+}
+</script>
+</body>
+</html>
