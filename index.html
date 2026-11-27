@@ -724,6 +724,35 @@
       align-self: flex-start;
     }
 
+    /* ─── TELA NO SEU ESTABELECIMENTO ───────────────── */
+    #tela-no-local { background: var(--dark2); }
+    .tela-local-grid {
+      display: grid; grid-template-columns: 1.1fr 1fr;
+      gap: 4rem; align-items: center;
+    }
+    .tela-local-grid .section-text + .section-text { margin-top: 1rem; }
+    .tela-local-cta { margin-top: 2.2rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1.2rem; }
+    .tela-local-note { font-size: .72rem; color: rgba(255,255,255,.4); line-height: 1.6; max-width: 280px; }
+    .tela-local-card .servico-title { font-size: 1.25rem; }
+    .tela-local-steps { counter-reset: paso; list-style: none; margin: 0; padding: 0; }
+    .tela-local-steps li {
+      counter-increment: paso; position: relative;
+      padding: 0 0 1.3rem 3rem; font-size: .84rem; line-height: 1.7; color: rgba(255,255,255,.6);
+    }
+    .tela-local-steps li:last-child { padding-bottom: 0; }
+    .tela-local-steps li::before {
+      content: counter(paso); position: absolute; left: 0; top: -.1rem;
+      width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(201,162,68,.45); color: var(--gold);
+      font-family: var(--font-title); font-weight: 700; font-size: .85rem;
+    }
+    .tela-local-steps li strong { display: block; color: var(--white); font-weight: 600; font-size: .88rem; }
+    .tela-local-rule {
+      margin-top: 1.6rem; padding: .9rem 1.1rem; font-size: .76rem; line-height: 1.65;
+      color: rgba(255,255,255,.7); background: rgba(201,162,68,.07); border: 1px solid rgba(201,162,68,.28);
+    }
+    .tela-local-rule strong { color: var(--gold2); }
+
     /* ─── MAPA DA REDE ─────────────────────────────── */
     #mapa { background: var(--dark2); }
     .mapa-grid {
@@ -1080,6 +1109,7 @@
       .psico-grid, .mapa-grid, .cta-wrap { grid-template-columns: 1fr; gap: 3rem; }
       .tech-grid { grid-template-columns: 1fr 1fr; }
       .servicos-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+      .tela-local-grid { grid-template-columns: 1fr; gap: 2.5rem; }
       .blog-cards { grid-template-columns: 1fr 1fr; }
       .footer-grid { grid-template-columns: 1fr 1fr; gap: 2.5rem; }
     }
@@ -1236,6 +1266,7 @@
     <li><a href="#psicologia">Estratégia</a></li>
     <li><a href="#tecnologia">Tecnologia</a></li>
     <li><a href="#servicos">Serviços</a></li>
+    <li><a href="#tela-no-local">Quero uma Tela</a></li>
     <li><a href="#mapa">Rede</a></li>
     <li><a href="#blog">Blog</a></li>
     <li><a href="#contato">Contato</a></li>
@@ -1542,6 +1573,41 @@
           <li>Suporte e monitoramento contínuo</li>
         </ul>
         <a href="#" class="btn-primary" onclick="openFormModal(); return false;" data-track="servico-tela-propria"><span>Quero Minha Tela →</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TELA NO SEU ESTABELECIMENTO ────────────────────────── -->
+<section id="tela-no-local">
+  <div class="container">
+    <div class="tela-local-grid">
+      <div>
+        <div class="section-label">Para donos de estabelecimentos</div>
+        <h2 class="section-title">Quer uma tela<br><em>no seu negócio?</em></h2>
+        <p class="section-text">
+          Cedendo um espaço no seu estabelecimento para uma tela da Impacto TV, você recebe <strong style="color:var(--gold2)">publicidade própria gratuita e permanente</strong> na tela — com a arte produzida por nós. Instalação e manutenção sem nenhum custo para você.
+        </p>
+        <p class="section-text">
+          Peça a sua pelo formulário: você informa seus dados e os do local, lê e aceita o acordo digitalmente (ou assina no local) e nós combinamos a visita de instalação.
+        </p>
+        <div class="tela-local-cta">
+          <a href="#" class="btn-primary" onclick="openFormModal('quero-uma-tela.html'); return false;" data-track="cta-quero-tela-no-local"><span>Quero uma Tela →</span></a>
+          <span class="tela-local-note">Preenchimento rápido. O acordo completo é exibido antes do aceite.</span>
+        </div>
+      </div>
+
+      <div class="servico-card servico-card-destaque tela-local-card reveal-item">
+        <div class="servico-badge servico-badge-gold">Como funciona</div>
+        <ol class="tela-local-steps">
+          <li><strong>Você pede a tela</strong>Preenche seus dados e os do estabelecimento.</li>
+          <li><strong>Aceita o acordo</strong>Digitalmente na tela, por e-mail ou assinando no local.</li>
+          <li><strong>Instalamos</strong>Combinamos a visita; instalação e manutenção por nossa conta.</li>
+          <li><strong>Seu negócio na tela</strong>Sua publicidade roda de graça, com até 2 atualizações de arte por ano.</li>
+        </ol>
+        <div class="tela-local-rule">
+          <strong>Permanência mínima de 12 meses.</strong> Se não quiser mais a tela, é só avisar com <strong>3 meses de antecedência</strong> antes do vencimento do contrato.
+        </div>
       </div>
     </div>
   </div>
@@ -1922,9 +1988,9 @@ document.querySelectorAll('.blog-card').forEach((el, i) => {
 });
 
 /* ══ FORM POPUP ══════════════════════════════════════════ */
-function openFormModal() {
+function openFormModal(page) {
   const iframe = document.getElementById('form-iframe');
-  const targetSrc = new URL('formulario-clientes.html', window.location.href).href;
+  const targetSrc = new URL(typeof page === 'string' ? page : 'formulario-clientes.html', window.location.href).href;
   if (iframe.src !== targetSrc) {
     iframe.src = targetSrc;
   }
